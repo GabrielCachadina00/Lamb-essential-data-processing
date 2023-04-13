@@ -3,6 +3,8 @@
 
 extern crate csv;
 
+use std::io;
+
 use std::fs::File;
 use std::vec::Vec;
 use std::fs;
@@ -10,6 +12,51 @@ use csv::ReaderBuilder;
 use csv::Writer;
 
 fn main() {
+    clear_screen();
+    print!("\n
+    #########################################################################################
+    #                           LAMB ESSENTIAL DATA PROCESSING                              #
+    #########################################################################################
+    by Gabriel Cachadiña
+    
+    ");
+
+    print!("\n
+    Select the operation mode:
+
+    (1) input.csv contains data in chuncks of n data
+
+        - input.csv:
+        ax0,ax1,...,axn,ay0,ay1,...,ayn,az0,az1,...azn
+
+    In this case input->1, in the next step you will be asked for the n size of the data
+
+
+    (2) Test
+
+
+    ");
+
+    clear_screen();
+
+    let mode: u32 = input_data();
+
+
+    if mode == 1{
+        println!("Mode 1 selected, please enter the number of columns for each acceleration (n):");
+
+        let n = 1;
+        mode1(n);
+
+    }
+    else{
+        println!("no mode selected");
+        std::process::abort(); //Closes the file
+    }
+}
+
+
+fn mode1(n:u32){
     let file = File::open("src/input_file/input.csv").expect("Failed to open file");    //Loads the file
     let mut reader = ReaderBuilder::new().has_headers(true).from_reader(file);         //Reader builder
 
@@ -57,6 +104,9 @@ fn main() {
     let mut ai;
 
     
+    writer.write_record(&["mean_x","mean_y","mean_z","var_x","var_y","var_z","sma","ai"]).unwrap();
+
+
     for i in 0..nrows { 
 
         //-------------------------------------------------------
@@ -137,6 +187,22 @@ fn main() {
     // Flush the writer to ensure all data is written to disk
     writer.flush().unwrap();
 
+    println!("output.csv ready!")
+}
 
 
+
+//Clears screen
+fn clear_screen(){
+    print!("\x1B[2J\x1B[1;1H");
+}
+
+//Takes data from the terminal
+fn input_data()->u32{
+    let mut input_line = String::new();
+    io::stdin()
+        .read_line(&mut input_line)
+        .expect("Failed to read line");
+    let input: u32 = input_line.trim().parse().expect("Input not an integer");
+    return input;
 }
