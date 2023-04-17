@@ -40,9 +40,11 @@ fn main() {
     In this case input->1, in the next step you will be asked for the n size of the data
 
 
-    (2) Test
-
-
+    (2) input.csv is series data
+        
+        -input.csv
+        ax,ay,az
+     
     ");
 
     clear_screen();
@@ -57,13 +59,24 @@ fn main() {
         (0) No
         ");
         let n = input_data();
-        let values = mode1();
+        let values = mode1(n);
 
         if n==1{
             scale(values);
         }
+    }
+    else if mode == 2{
+        print!("\
+        Mode 2 selected, select the number of chuncks
+        ");
+
+        let n = input_data();
+
+        let chunks = chunckify(n.try_into().unwrap());
+
 
     }
+    
     else{
         println!("no mode selected");
         std::process::abort(); //Closes the file
@@ -75,7 +88,7 @@ fn main() {
 
 
 
-fn mode1()->Matrix{
+fn mode1(n:u32)->Matrix{
     let file = File::open("src/input_file/input.csv").expect("Failed to open file");    //Loads the file
     let mut reader = ReaderBuilder::new().has_headers(true).from_reader(file);         //Reader builder
 
@@ -107,7 +120,6 @@ fn mode1()->Matrix{
         data.push(row);                                                                 //Save the data in the vector data
     }
 
-    println!("{}",nrows);
 
 
     let mut mean_x;
@@ -125,7 +137,6 @@ fn mode1()->Matrix{
     let mut values : Vec<Vec<f64>> = vec![vec![0.0;8];nrows]; //Data saved as a 2d vector
     
     writer.write_record(&["mean_x","mean_y","mean_z","var_x","var_y","var_z","sma","ai"]).unwrap();
-
 
     for i in 0..nrows { 
 
@@ -326,10 +337,6 @@ fn scale(input:Matrix){
     let max_min = [[x_mean_min,x_mean_max],[y_mean_min,y_mean_max],[z_mean_min,z_mean_max],[x_var_min,x_var_max],[y_var_min,y_var_max],[z_var_min,z_var_max],[sma_min,sma_max],[ai_min,ai_max]];
     //Knowing the maximun and minimun values we proceed to normalize the data and save it in output.csv
 
-
-    //println!("{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}",x_mean_min,x_mean_max,y_mean_min,y_mean_max,z_mean_min,z_mean_max,x_var_min,x_var_max,y_var_min,y_var_max,z_var_min,z_var_max,sma_min,sma_max,ai_min,ai_max);
-    //println!("{:?}",max_min);
-
     let mut output = Matrix{
         rows: input.rows,
         cols: input.cols,
@@ -362,6 +369,55 @@ fn scale(input:Matrix){
 }
 
 
+fn chunckify(n:usize)->Matrix{
+
+    let file = File::open("src/input_file/input.csv").expect("Failed to open file");    //Loads the file
+    let mut reader = ReaderBuilder::new().has_headers(true).from_reader(file);         //Reader builder
+
+    let mut data: Vec<Vec<f64>> = Vec::new();                                           //Data saved in a matrix
+
+
+    // Get the number of rows and columns in the CSV file
+    let mut nrows = 0;
+
+    for result in reader.records() {                                                    //Go thought all records
+        let record = result.expect("Failed to read record");
+        let mut row: Vec<f64> = Vec::new();                                             //Creates a new row to store the new rows
+
+        nrows += 1;                                                                     //Count the number of rows of the file
+
+        for field in record.iter() {                                                    //iterates all the fields in a specific row
+            let val = field.parse::<f64>().expect("Failed to parse f64 value");
+            row.push(val);
+        }
+        data.push(row);                                                                 //Save the data in the vector data
+    }
+
+
+    println!("{:?}",data);
+
+
+    let mut output = Matrix{
+        rows: nrows/n,
+        cols: n*3,
+        values: vec![vec![0.0;n*3];nrows/n],
+    };
+
+    
+    let mut column = 0;
+
+    for i in 0..output.rows{
+        for j in 0..output.cols/3{
+            output.values[i][j] = data[column][0];
+            output.values[i][j+n] = data[column][1];
+            output.values[i][j+n+n] = data[column][2];
+            column = column+1;
+        }
+    } 
+
+    return output;
+
+}
 
 
 //Clears screen
